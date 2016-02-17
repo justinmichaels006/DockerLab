@@ -7,16 +7,24 @@ FROM    centos:centos6
 RUN     yum install -y nodejs npm
 RUN 	yum -y install git
 # Install golang
-RUN	yum install -y go
+RUN	yum install -y golang
 
-# Install travel sample application
+# Application: travel-sample
 RUN	mkdir ~/try-cb
 RUN	git clone https://github.com/ToddGreenstein/try-cb-nodejs.git ~/try-cb
 RUN	npm install node-gyp -g
 RUN	npm install ~/try-cb
 EXPOSE 3000 
 
-# Install go-beersample
+# Application: go-beersample
 RUN     mkdir ~/try-go
-RUN     git clone  ~/try-go
-EXPOSE 8080
+RUN     git clone git://github.com/couchbaselabs/beersample-go.git ~/try-go
+EXPOSE 9980
+
+# JAVA Environment
+RUN	yum install -y java-1.8.0-openjdk
+RUN	sudo wget http://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo -O /etc/yum.repos.d/epel-apache-maven.repo
+RUN	sudo sed -i s/\$releasever/6/g /etc/yum.repos.d/epel-apache-maven.repo
+RUN	sudo yum install -y apache-maven
+echo "$mvn --version"
+

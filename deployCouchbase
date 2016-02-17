@@ -65,13 +65,13 @@ couchbase-cli cluster-init -c $HOST1 \
 
 # Add all remaining nodes to the cluster
 echo "Add nodes"
-couchbase-cli server-add -c ${HOST1}:${PORT} \
-	--user=${USER} \
-	--password=${PASS} \
-	--server-add=${NODE2}:${PORT} \
-	--server-add-username=${USER} \
-	--server-add-password=${PASS} \
-	--services=data,index,query
+couchbase-cli server-add -c $HOST1:$PORT \
+	--user=$USER \
+	--password=$PASS \
+	--server-add=$NODE2:$PORT \
+	--server-add-username=$USER \
+	--server-add-password=$PASS \
+	--services=$CB_SERVICES
 
 echo "rebalance"
 couchbase-cli rebalance -c ${HOST1}:${PORT} --user=${USER} --password=${PASS}
@@ -88,7 +88,6 @@ couchbase-cli bucket-create -c ${HOST1}:${PORT} \
 
 # Add app environment
 docker build -f dockerfile_demoapps -t user/demoapp:latest .
-docker run -t -p 3000:3000 -p 8080:8080 -d user/demoapp
+docker run -t -p 3000:3000 -p 9980:9980 -d user/demoapp
 
 # TODO: Add Java environment and data loader labs
-# TODO: Add node and golang data loader labs
