@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# Get the docker image and set the environment
+docker pull couchbase
+mkdir ~/cbDay/
+mkdir ~/cbDay/{node1,node2}
+
+docker-compose up -d
+
+# Get the ip's of each machine
+# docker inspect --format '{{ .NetworkSettings.IPAddress }}' couchbasecluster_couchbase3_1
+HOST1="$(docker-machine ip default)"
+echo "Docker Host..."$HOST1
+NODE1="$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerlab_couchbase2_1)"
+echo "Node1..."$NODE1
+NODE2="$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dockerlab_couchbase1_1)"
+echo "Node2..."$NODE2
+
+#
+# Make sure couchbase-cli is in the path (Linux / Mac)
+#
+if [ `uname` == "Darwin" ]
+then
+export PATH=$PATH:/Applications/Couchbase\ Server.app/Contents/Resources/couchbase-core/bin/
+else
+    export PATH=$PATH:/opt/couchbase/bin/
+fi
+
+# Pause to let your poor laptop catch up
+echo "Pause 10 seconds"
+sleep 20
+
+# Parameters for bucket one (couchbase-type)
+BUCKET_NAME=testload
+BUCKET_TYPE=couchbase  # memcached
+BUCKET_QUOTA=256
+BUCKET_REPLICA=1
+PORT=8091
+USER=Administrator
+PASS=password
+CLUSTER_MEM=640
+CB_IDXSIZE=256
+CB_SERVICES=data,index,query
+CBPATH=/opt/couchbase/var/lib/couchbase/data
+
+# Set the path to be used outside container
+echo "set the path Node 1"
+couchbase-cli node-init -c $HOST1 --node-init-data-path=$CBPATH --node-init-index-path=$CBPATH -u $USER -p $PASS
+# echo "set the path Node2"
+# couchbase-cli node-init -c $NODE2 --node-init-data-path=$CBPATH --node-init-index-path=$CBPATH -u $USER -p $PASS
+
+# Initialise the cluster with a single node, using the credentials specified above
+echo "Initialize cluster"
+couchbase-cli cluster-init -c $HOST1 \
+        -u $USER \
+        -p $PASS \
+	--cluster-init-port=$PORT \
+	--cluster-init-ramsize=$CLUSTER_MEM \
+	--cluster-ramsize=$CB_RAMSIZ \
+	--services=$CB_SERVICES \
+	--cluster-index-ramsize=$CB_IDXSIZE
+
+#       --cluster-init-username=$USER \ # 2.x
+#       --cluster-init-password=$PASS \ # 2.x
+
+# Add all remaining nodes to the cluster
+echo "Add nodes"
+couchbase-cli server-add -c ${HOST1}:${PORT} \
+	--user=${USER} \
+	--password=${PASS} \
+	--server-add=${NODE2}:${PORT} \
+	--server-add-username=${USER} \
+	--server-add-password=${PASS} \
+	--services=data,index,query
+
+echo "rebalance"
+couchbase-cli rebalance -c ${HOST1}:${PORT} --user=${USER} --password=${PASS}
+
+echo "buckets"
+# Create a couchbase-type bucket using the credentials supplied above
+couchbase-cli bucket-create -c ${HOST1}:${PORT} \
+				--user=${USER} \
+				--password=${PASS} \
+                --bucket=${BUCKET_NAME} \
+                --bucket-ramsize=${BUCKET_QUOTA} \
+                --bucket-replica=${BUCKET_REPLICA} \
+                --bucket-type=${BUCKET_TYPE}
+
+# Add app environment
+docker build -f dockerfile_demoapps -t user/demoapp:latest .
+docker run -t -p 3000:3000 -p 8080:8080 -d user/demoapp
+
+# TODO: Add Java environment and data loader labs
+# TODO: Add node and golang data loader labs

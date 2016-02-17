@@ -1,0 +1,22 @@
+FROM    centos:centos6
+
+# Enable Extra Packages for Enterprise Linux (EPEL) for CentOS
+# RUN     yum install -y epel-release
+
+# Install Node.js and npm
+RUN     yum install -y nodejs npm
+RUN 	yum -y install git
+# Install golang
+RUN	yum install -y go
+
+# Install travel sample application
+RUN	mkdir ~/try-cb
+RUN	git clone https://github.com/ToddGreenstein/try-cb-nodejs.git ~/try-cb
+RUN	npm install node-gyp -g
+RUN	npm install ~/try-cb
+EXPOSE 3000 
+
+# Install go-beersample
+RUN     mkdir ~/try-go
+RUN     git clone  ~/try-go
+EXPOSE 8080
