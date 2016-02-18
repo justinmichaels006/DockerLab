@@ -63,6 +63,7 @@ couchbase-cli cluster-init -c $HOST1 \
         -p $PASS \
 	--cluster-init-port=$PORT \
 	--services=$CB_SERVICES \
+	--cluster-ramsize=$CLUSTER_MEM \
 	--cluster-index-ramsize=$CB_IDXSIZE
 
 #       --cluster-init-username=$USER \ # 2.x
@@ -92,6 +93,6 @@ couchbase-cli bucket-create -c ${HOST1}:${PORT} \
                 --bucket-type=${BUCKET_TYPE}
 
 # Add app environment
-docker build -f dockerfile_demoapps -t user/demoapp:latest .
-docker run -t -p 3000:3000 -p 9980:9980 -d user/demoapp
+docker build -f ~/dockerlab/dockerfile_demoapps -t demoapp .
+docker run -t -p 3000:3000 -p 9980:9980 -d demoapp
 
