@@ -43,9 +43,16 @@ CB_IDXSIZE=256
 CB_SERVICES=data,index,query
 CBPATH=/opt/couchbase/var/lib/couchbase/data
 
+# see https://issues.couchbase.com/browse/MB-16233
+curl -s -u $USER:$PASS -X POST \
+           http://$HOST1:$PORT/pools/default \
+           -d memoryQuota=$CLUSTER_MEM
+
 # Set the path to be used outside container
 echo "set the path Node 1"
 couchbase-cli node-init -c $HOST1 --node-init-data-path=$CBPATH --node-init-index-path=$CBPATH -u $USER -p $PASS
+
+# TODO: Validate if the custom path is handled across the cluster
 # echo "set the path Node2"
 # couchbase-cli node-init -c $NODE2 --node-init-data-path=$CBPATH --node-init-index-path=$CBPATH -u $USER -p $PASS
 
@@ -55,8 +62,6 @@ couchbase-cli cluster-init -c $HOST1 \
         -u $USER \
         -p $PASS \
 	--cluster-init-port=$PORT \
-	--cluster-init-ramsize=$CLUSTER_MEM \
-	--cluster-ramsize=$CB_RAMSIZ \
 	--services=$CB_SERVICES \
 	--cluster-index-ramsize=$CB_IDXSIZE
 
@@ -90,4 +95,3 @@ couchbase-cli bucket-create -c ${HOST1}:${PORT} \
 docker build -f dockerfile_demoapps -t user/demoapp:latest .
 docker run -t -p 3000:3000 -p 9980:9980 -d user/demoapp
 
-# TODO: Add Java environment and data loader labs
