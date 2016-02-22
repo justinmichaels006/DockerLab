@@ -93,6 +93,6 @@ couchbase-cli bucket-create -c ${HOST1}:${PORT} \
                 --bucket-type=${BUCKET_TYPE}
 
 # Add app environment
-docker build -f ~/dockerlab/dockerfile_demoapps -t demoapp .
+docker build -f ~/DockerLab/dockerfile_demoapps -t demoapp .
 docker run -t -p 3000:3000 -p 9980:9980 -d demoapp
 
